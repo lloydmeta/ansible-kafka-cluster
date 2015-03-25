@@ -1,6 +1,11 @@
 # Kafka CentOS virtual cluster
 
-Easily create a local Kafka cluster w/ Zookeeper quorum via Vagrant + Ansible.
+Easily create a local Kafka cluster w/ Zookeeper quorum via Vagrant + Ansible. Or just use the Ansible playbooks.
+
+The main differences between this and [Wirbelsturm](https://github.com/miguno/wirbelsturm) are:
+
+- Focus on Ansible and playbooks that can be used to provision Zk + Kafka w/o Vagrant
+- No Storm provisioning as of writing
 
 ## Usage
 
