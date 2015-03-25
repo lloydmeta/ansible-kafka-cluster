@@ -22,8 +22,11 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     'zk-node-3' => { :ip => "192.168.5.102", :zk_id => 3 }
   }
 
-  zk_cluster = Hash[zk_cluster_unique.map { |k, v|
-    [k, v.merge(:memory => zk_vm_memory_mb, :client_port => zk_port )]
+  zk_cluster = Hash[zk_cluster_unique.map.with_index { |(k, v), idx|
+    [k, v.merge(
+      :memory => zk_vm_memory_mb,
+      :client_port => zk_port,
+      :client_forward_to => zk_port + idx )]
   }]
 
   # broker_id must be unique for each host in the cluster
@@ -32,45 +35,34 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     'kafka-node-2' => { :ip => "192.168.5.104", :broker_id => 2 }
   }
 
-  kafka_cluster = Hash[kafka_cluster_unique.map { |k, v|
-    [k, v.merge(:memory => kafka_vm_memory_mb, :client_port => kafka_port )]
+  kafka_cluster = Hash[kafka_cluster_unique.map.with_index { |(k, v), idx|
+    [k, v.merge(
+      :memory => kafka_vm_memory_mb,
+      :client_port => kafka_port,
+      :client_forward_to => kafka_port + idx )]
   }]
 
-  zk_cluster.each_with_index do |(short_name, info), idx|
+  total_cluster = zk_cluster.merge(kafka_cluster)
+
+  total_cluster.each_with_index do |(short_name, info), idx|
 
     config.vm.define short_name do |host|
-      host.vm.network :forwarded_port, guest: info[:client_port], host: info[:client_port] + idx
+      host.vm.network :forwarded_port, guest: info[:client_port], host: info[:client_forward_to]
       host.vm.network :private_network, ip: info[:ip]
       host.vm.hostname = short_name
       host.vm.provider :virtualbox do |vb|
         vb.customize ["modifyvm", :id, "--memory", info[:memory]]
       end
 
-    end
-
-  end
-
-  kafka_cluster.each_with_index do |(short_name, info), idx|
-
-    # prevents us from forwarding the port with the same index as ZK cluster...prolly should refactor
-    # to be DRYer
-    config.vm.define short_name do |host|
-      host.vm.network :forwarded_port, guest: info[:client_port], host: info[:client_port] + idx
-      host.vm.network :private_network, ip: info[:ip]
-      host.vm.hostname = short_name
-      host.vm.provider :virtualbox do |vb|
-        vb.customize ["modifyvm", :id, "--memory", info[:memory]]
-      end
 
       # This allows us to provision everything in one go, in parallel.
-       if idx == (kafka_cluster.size - 1)
+       if idx == (total_cluster.size - 1)
          host.vm.provision :ansible do |ansible|
            ansible.playbook = "site.yml"
            ansible.groups = {
              "zk" => zk_cluster.keys,
              "kafka" => kafka_cluster.keys
            }
-           ansible.inventory_path=".vagrant/provisioners/ansible/inventory/vagrant_ansible_inventory"
            ansible.verbose = 'vv'
            ansible.sudo = true
            ansible.limit = 'all'

@@ -9,4 +9,3 @@
 - hosts: kafka
   roles:
     - kafka
-
