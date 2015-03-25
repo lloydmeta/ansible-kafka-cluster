@@ -26,7 +26,7 @@
   tags: zookeeper
 
 - name: check if tar has been downloaded
-  command: test -f /tmp/zookeeper/{{ zk_name }}/{{ zk_name }}.tar.gz
+  command: test -f /tmp/{{ zk_name }}.tar.gz
   register: zookeeper_tar_downloaded
   failed_when: zookeeper_tar_downloaded.rc not in [0, 1]
   changed_when: False

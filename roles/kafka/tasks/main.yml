@@ -30,7 +30,7 @@
   tags: kafka
 
 - name: check if tar has been downloaded
-  command: test -f /tmp/kafka/{{ kafka_name }}.tar.gz
+  command: test -f /tmp/{{ kafka_name }}.tgz
   register: kafka_tar_downloaded
   failed_when: kafka_tar_downloaded.rc not in [0, 1]
   changed_when: False
@@ -59,7 +59,7 @@
 - name: Copy real config
   template:
     src: kafka-properties.j2
-    dest: "{{ kafka.install_dir/config/real-server.properties"
+    dest: "{{ kafka_dir }}/config/real-server.properties"
   tags: kafka
 
 - name: systemd start script
