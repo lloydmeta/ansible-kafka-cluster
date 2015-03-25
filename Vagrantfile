@@ -20,30 +20,39 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   zk_vm_memory_mb = 256
   zk_port = 2181
-  kafka_vm_memory_mb = 1024
+  kafka_vm_memory_mb = 512
   kafka_port = 9092
 
-  # zk_id must be unique for each host in the cluster.
-  zk_cluster_unique = {
-    'zk-node-1' =>  { :ip => "192.168.5.100", :zk_id => 1 },
+  # < ------- These need to be set in group vars if using Ansible w/o Vagrant -------
+
+  # The follwing variables will need to be passed manually if you want to use the Ansible
+  # playbooks w/o Vagrant. They are set in this Vagrantfile in this manner because it allows us to easily
+  # increase or decrease the cluster sizes.
+
+  # Note that zk_id must be unique for each host in the cluster.
+  zk_cluster_info = {
+    'zk-node-1' => { :ip => "192.168.5.100", :zk_id => 1 },
     'zk-node-2' => { :ip => "192.168.5.101", :zk_id => 2 },
     'zk-node-3' => { :ip => "192.168.5.102", :zk_id => 3 }
   }
 
-  zk_cluster = Hash[zk_cluster_unique.map.with_index { |(k, v), idx|
+  # Note that broker_id must be unique for each host in the cluster
+  kafka_cluster_info = {
+    'kafka-node-1' => { :ip => "192.168.5.103", :broker_id => 1 },
+    'kafka-node-2' => { :ip => "192.168.5.104", :broker_id => 2 },
+    'kafka-node-3' => { :ip => "192.168.5.105", :broker_id => 3 }
+  }
+
+  ## ------- These need to be set in group vars if using Ansible w/o Vagrant ------- >
+
+  zk_cluster = Hash[zk_cluster_info.map.with_index { |(k, v), idx|
     [k, v.merge(
       :memory => zk_vm_memory_mb,
       :client_port => zk_port,
       :client_forward_to => zk_port + idx )]
   }]
 
-  # broker_id must be unique for each host in the cluster
-  kafka_cluster_unique = {
-    'kafka-node-1' =>  { :ip => "192.168.5.103", :broker_id => 1 },
-    'kafka-node-2' => { :ip => "192.168.5.104", :broker_id => 2 }
-  }
-
-  kafka_cluster = Hash[kafka_cluster_unique.map.with_index { |(k, v), idx|
+  kafka_cluster = Hash[kafka_cluster_info.map.with_index { |(k, v), idx|
     [k, v.merge(
       :memory => kafka_vm_memory_mb,
       :client_port => kafka_port,
@@ -62,7 +71,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
         vb.customize ["modifyvm", :id, "--memory", info[:memory]]
       end
 
-
       # This allows us to provision everything in one go, in parallel.
        if idx == (total_cluster.size - 1)
          host.vm.provision :ansible do |ansible|
@@ -73,7 +81,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
            }
            ansible.verbose = 'vv'
            ansible.sudo = true
-           ansible.limit = 'all'
+           ansible.limit = 'all' # otherwise, Ansible only runs on the current host...
            ansible.extra_vars = {
              accept_oracle_licence: accept_oracle_licence,
              zk_client_port: zk_port,
