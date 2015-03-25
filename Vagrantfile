@@ -22,9 +22,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     'zk-node-3' => { :ip => "192.168.5.102", :zk_id => 3 }
   }
 
-  zk_cluster = zk_cluster_unique.map { |k, v|
+  zk_cluster = Hash[zk_cluster_unique.map { |k, v|
     [k, v.merge(:memory => zk_vm_memory_mb, :client_port => zk_port )]
-  }
+  }]
 
   # broker_id must be unique for each host in the cluster
   kafka_cluster_unique = {
@@ -32,9 +32,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     'kafka-node-2' => { :ip => "192.168.5.104", :broker_id => 2 }
   }
 
-  kafka_cluster = kafka_cluster_unique.map { |k, v|
+  kafka_cluster = Hash[kafka_cluster_unique.map { |k, v|
     [k, v.merge(:memory => kafka_vm_memory_mb, :client_port => kafka_port )]
-  }
+  }]
 
   zk_cluster.each_with_index do |(short_name, info), idx|
 
@@ -67,8 +67,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
          host.vm.provision :ansible do |ansible|
            ansible.playbook = "site.yml"
            ansible.groups = {
-             "zk" => zk_cluster_unique.keys,
-             "kafka" => kafka_cluster_unique.keys
+             "zk" => zk_cluster.keys,
+             "kafka" => kafka_cluster.keys
            }
            ansible.inventory_path=".vagrant/provisioners/ansible/inventory/vagrant_ansible_inventory"
            ansible.verbose = 'vv'
