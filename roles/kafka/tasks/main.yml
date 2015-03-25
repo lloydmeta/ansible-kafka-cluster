@@ -1,0 +1,73 @@
+- name: disable firewalld
+  service: name=firewalld state=stopped enabled=no
+  ignore_errors: True  #when firewalld is stopped
+  tags: kafka
+
+- name: install tools
+  yum: name="@Development tools" state=present
+  tags: kafka
+
+- name: create group
+  group:
+    name: kafka
+    state: present
+  tags: kafka
+
+- name: create user
+  user:
+    name: kafka
+    group: kafka
+  tags: kafka
+
+- name: Setting internal variable
+  set_fact:
+    kafka_name: kafka_{{ kafka.scala_version }}-{{ kafka.version }}
+  tags: kafka
+
+- name: Setting internal variable
+  set_fact:
+    kafka_dir: "{{ kafka.install_dir }}/{{ kafka_name }}"
+  tags: kafka
+
+- name: check if tar has been downloaded
+  command: test -f /tmp/kafka/{{ kafka_name }}.tar.gz
+  register: kafka_tar_downloaded
+  failed_when: kafka_tar_downloaded.rc not in [0, 1]
+  changed_when: False
+  tags: kafka
+
+- name: Ensure Kafka tar is downloaded
+  get_url:
+    url: "{{ kafka.mirror }}/kafka/{{ kafka.version }}/{{ kafka_name }}.tgz"
+    dest: /tmp
+  tags: kafka
+  when: kafka_tar_downloaded.rc == 1
+
+- name: Ensure tar is extracted
+  command: tar xzf /tmp/{{ kafka_name }}.tgz chdir="{{ kafka.install_dir }}"
+  tags: kafka
+
+# Config and start Kafka
+- name: Ensures data dir {{ kafka.data_dir }} exists
+  file:
+    path: "{{ kafka.data_dir }}"
+    state: directory
+    owner: kafka
+    group: kafka
+  tags: kafka
+
+- name: Copy real config
+  template:
+    src: kafka-properties.j2
+    dest: "{{ kafka.install_dir/config/real-server.properties"
+  tags: kafka
+
+- name: systemd start script
+  template:
+    src: kafka-systemd.j2
+    dest: /etc/systemd/system/kafka.service
+    owner: root
+    group: root
+    mode: 644
+  notify: start kafka
+  tags: kafka

@@ -1,0 +1,77 @@
+- name: disable firewalld
+  service: name=firewalld state=stopped enabled=no
+  ignore_errors: True  #when firewalld is stopped
+  tags: zookeeper
+
+- name: create group
+  group:
+    name: zookeeper
+    state: present
+  tags: zookeeper
+
+- name: create user
+  user:
+    name: zookeeper
+    group: zookeeper
+  tags: zookeeper
+
+- name: Setting internal variable
+  set_fact:
+    zk_name: zookeeper-{{ zk.version }}
+  tags: zookeeper
+
+- name: Zookeeper | Setting internal variable
+  set_fact:
+    zk_dir: "{{ zk.install_dir }}/{{ zk_name }}"
+  tags: zookeeper
+
+- name: check if tar has been downloaded
+  command: test -f /tmp/zookeeper/{{ zk_name }}/{{ zk_name }}.tar.gz
+  register: zookeeper_tar_downloaded
+  failed_when: zookeeper_tar_downloaded.rc not in [0, 1]
+  changed_when: False
+  tags: zookeeper
+
+- name: Ensure Zookeeper tar is downloaded
+  get_url:
+    url: "{{ zk.mirror }}/zookeeper/{{ zk_name }}/{{ zk_name }}.tar.gz"
+    dest: /tmp
+  tags: zookeeper
+  when: zookeeper_tar_downloaded.rc == 1
+
+- name: Ensure tar is extracted
+  command: tar xzf /tmp/{{ zk_name }}.tar.gz chdir="{{ zk.install_dir }}"
+  tags: zookeeper
+
+# Config and start Zookeeper
+- name: Ensure zoo.conf is present
+  template:
+    src: zoo.cfg
+    dest: "{{ zk_dir }}/conf/zoo.cfg"
+  notify: restart zookeeper
+  tags: zookeeper
+
+- name: Ensures data dir {{ zk.data_dir }} exists
+  file:
+    path: "{{ zk.data_dir }}"
+    state: directory
+    owner: zookeeper
+    group: zookeeper
+  tags: zookeeper
+
+- name: Ensure myid is set to {{ cluster_node_seq }} in {{ zk.data_dir }}/myid
+  template:
+    src: myid
+    dest: "{{ zk.data_dir }}/myid"
+  notify: restart zookeeper
+  tags: zookeeper
+
+- name: systemd start script
+  template:
+    src: zookeeper-systemd.j2
+    dest: /etc/systemd/system/zookeeper.service
+    owner: root
+    group: root
+    mode: 644
+  notify: start zookeeper
+  tags: zookeeper
