@@ -60,6 +60,7 @@
   template:
     src: kafka-properties.j2
     dest: "{{ kafka_dir }}/config/real-server.properties"
+  notify: restart kafka
   tags: kafka
 
 - name: systemd start script
