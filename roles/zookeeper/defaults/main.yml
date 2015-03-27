@@ -1,7 +1,17 @@
----
 zk:
   version: 3.4.6
   mirror: http://ftp.meisei-u.ac.jp/mirror/apache/dist
   data_dir: /var/lib/zookeeper
   install_dir: "/etc"
   tick_time: 2000
+# zk_cluster_info: "{{ vagrant_zk_cluster_info }}"
+# If not using Vagrant,
+# Should be a list of node hostnames to node info
+# Example:
+# zk_cluster_info:
+#   zk-node-1:
+#     zk_id: 1
+#   zk-node-2:
+#     zk_id: 2
+#   zk-node-3:
+#     zk_id: 3
