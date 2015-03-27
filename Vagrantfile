@@ -11,27 +11,17 @@ VAGRANTFILE_API_VERSION = "2"
 
 class IpAssigner
 
-  attr_accessor :current
-
-  def initialize(current)
-    self.current = current
+  def self.next_ip(current_ip)
+    IPAddr.new(current_ip).succ.to_s
   end
 
-  def next
-    IpAssigner.new(next_ip)
-  end
-
-  def next_ip
-    IPAddr.new(current).succ.to_s
-  end
-
-  def generate(number_of_addresses)
+  def self.generate(start_ip, number_of_addresses)
     number_of_addresses.times.inject([]) { |acc, i|
       if acc.empty?
-        [current]
+        [start_ip]
       else
-        nekst = IpAssigner.new(acc.last).next
-        acc + [nekst.current]
+        nekst = next_ip(acc.last)
+        acc + [nekst]
       end
     }
   end
@@ -80,9 +70,13 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   ## ------- These need to be set in group vars if using Ansible w/o Vagrant ------- >
 
   # Helper to make new ips
-  ip_assigner = IpAssigner.new(private_network_begin)
-  zk_ips = ip_assigner.generate(zk_cluster_info.size)
-  kafka_ips = IpAssigner.new(zk_ips.last || private_network_begin).generate(kafka_cluster_info.size)
+  zk_ips = IpAssigner.generate(
+    private_network_begin,
+    zk_cluster_info.size)
+
+  kafka_ips = IpAssigner.generate(
+    IpAssigner.next_ip(zk_ips.last || private_network_begin),
+    kafka_cluster_info.size)
 
   zk_cluster = Hash[zk_cluster_info.map.with_index { |(k, v), idx|
     [k, v.merge(
