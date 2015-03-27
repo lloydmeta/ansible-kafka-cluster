@@ -1,11 +1,35 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
+require 'ipaddr'
+
 unless Vagrant.has_plugin?("vagrant-hostmanager")
   raise 'vagrant-hostmanager is not installed! run "vagrant plugin install vagrant-hostmanager" to fix'
 end
 
 VAGRANTFILE_API_VERSION = "2"
+
+class IpAssigner
+
+  attr_accessor :ip_start
+
+  def initialize(start_assigning_from)
+    self.ip_start = start_assigning_from
+    self.ips = []
+  end
+
+  def next_ip
+    if ips.size == 0
+      (ips << ip_start).last
+    else
+      (ips << IPAddr.new(ips.last).succ.to_s).last
+    end
+  end
+
+  private
+  attr_accessor :ips
+
+end
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
@@ -18,6 +42,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   accept_oracle_licence = true # set to false if you don't agree (will not install Java8 for you)
 
+  private_network_begin =  "192.168.5.100" # private ip will start incrementing from this
   zk_vm_memory_mb = 256
   zk_port = 2181
   kafka_vm_memory_mb = 512
@@ -29,24 +54,31 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # playbooks w/o Vagrant. They are set in this Vagrantfile in this manner because it allows us to easily
   # increase or decrease the cluster sizes.
 
-  # Note that zk_id must be unique for each host in the cluster.
+  # Note that zk_id must be unique for each host in the cluster. It should ideally not change
+  # throughout the lifetime of the Zookeeper installation on a given machine.
   zk_cluster_info = {
-    'zk-node-1' => { :ip => "192.168.5.100", :zk_id => 1 },
-    'zk-node-2' => { :ip => "192.168.5.101", :zk_id => 2 },
-    'zk-node-3' => { :ip => "192.168.5.102", :zk_id => 3 }
+    'zk-node-1' => { :zk_id => 1 },
+    'zk-node-2' => { :zk_id => 2 },
+    'zk-node-3' => { :zk_id => 3 }
   }
 
-  # Note that broker_id must be unique for each host in the cluster
+  # Note that broker_id must be unique for each host in the cluster. It should ideally not change
+  # throughout the lifetime of the Kafka installation on a given machine.
   kafka_cluster_info = {
-    'kafka-node-1' => { :ip => "192.168.5.103", :broker_id => 1 },
-    'kafka-node-2' => { :ip => "192.168.5.104", :broker_id => 2 },
-    'kafka-node-3' => { :ip => "192.168.5.105", :broker_id => 3 }
+    'kafka-node-1' => { :broker_id => 1 },
+    'kafka-node-2' => { :broker_id => 2 },
+    'kafka-node-3' => { :broker_id => 3 }
   }
 
   ## ------- These need to be set in group vars if using Ansible w/o Vagrant ------- >
 
+  # Helper to make new ips
+
+  ip_assigner = IpAssigner.new(private_network_begin)
+
   zk_cluster = Hash[zk_cluster_info.map.with_index { |(k, v), idx|
     [k, v.merge(
+      :ip => ip_assigner.next_ip,
       :memory => zk_vm_memory_mb,
       :client_port => zk_port,
       :client_forward_to => zk_port + idx )]
@@ -54,6 +86,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   kafka_cluster = Hash[kafka_cluster_info.map.with_index { |(k, v), idx|
     [k, v.merge(
+      :ip => ip_assigner.next_ip,
       :memory => kafka_vm_memory_mb,
       :client_port => kafka_port,
       :client_forward_to => kafka_port + idx )]
@@ -84,9 +117,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
            ansible.limit = 'all' # otherwise, Ansible only runs on the current host...
            ansible.extra_vars = {
              accept_oracle_licence: accept_oracle_licence,
-             zk_client_port: zk_port,
-             zk_cluster_info: zk_cluster,
-             kafka_cluster_info: kafka_cluster
+             vagrant_zk_client_port: zk_port,
+             vagrant_zk_cluster_info: zk_cluster,
+             vagrant_kafka_cluster_info: kafka_cluster
            }
          end
        end

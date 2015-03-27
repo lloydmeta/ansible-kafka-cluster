@@ -4,3 +4,18 @@ kafka:
   mirror: http://ftp.meisei-u.ac.jp/mirror/apache/dist
   data_dir: /var/lib/kafka
   install_dir: "/etc"
+# This does not have to be every Zookeeper host, but the more the better
+#  by default, we assume this is run at the same time as Zookeeper provisioning
+zk_hosts: "{{ groups['zk'] }}" # This does not have to be every Zookeeper host
+zk_client_port: "{{ vagrant_zk_client_port }}"# Should be set properly if not using Vagrant
+kafka_cluster_info: "{{ vagrant_kafka_cluster_info }}"
+# If not using Vagrant,
+# Should be a list of node hostnames to node info
+# Example:
+# kafka_cluster_info:
+#   kafka-node-1:
+#     broker_id: 1
+#   kafka-node-2:
+#     broker_id: 2
+#   kafka-node-3:
+#     broker_id: 3

@@ -98,7 +98,7 @@ Then verify on any other Kafka node that your replicated topic is now missing on
 bin/kafka-topics.sh --describe --zookeeper zk-node-1:2181 --topic my-replicated-topic
 ```
 
-Feel free to send and consume messages while the node is down. Note though, that you may have to restart some of the shell-based consumer/producers that are already running because they don't work well with disaster situations..
+Feel free to send and consume messages while the node is down. Note though, that you may have to restart some of the shell-based consumer/producers that are already running because they don't work well in disaster situations..
 
 ### 8. Bring the Kafka node back up, put it to sleep, etc.
 

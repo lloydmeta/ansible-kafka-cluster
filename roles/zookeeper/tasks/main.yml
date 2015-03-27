@@ -3,6 +3,18 @@
   ignore_errors: True  #when firewalld is stopped
   tags: zookeeper
 
+# Otherwise, Zookeeper ends up not working when using ailases
+- name: remove own host from 127.0.0.1 aliases
+  lineinfile: >
+    dest=/etc/hosts
+    state=present
+    regexp='^(127\.0\.0\.1.*){{ inventory_hostname }}(.*)$'
+    line='\1\2'
+    backup=yes
+    backrefs=yes
+  tags: zookeeper
+  notify: restart zookeeper
+
 - name: create group
   group:
     name: zookeeper
