@@ -16,13 +16,9 @@ class IpAssigner
   end
 
   def self.generate(start_ip, number_of_addresses)
-    number_of_addresses.times.inject([]) { |acc, i|
-      if acc.empty?
-        [start_ip]
-      else
-        nekst = next_ip(acc.last)
-        acc + [nekst]
-      end
+    number_of_addresses.times.inject([start_ip]) { |acc, i|
+      nekst = next_ip(acc.last)
+      acc + [nekst]
     }
   end
 
