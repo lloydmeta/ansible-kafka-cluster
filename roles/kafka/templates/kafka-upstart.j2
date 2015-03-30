@@ -1,0 +1,16 @@
+start on filesystem or runlevel [2345]
+stop on shutdown
+
+console output
+
+respawn
+respawn limit 5 10
+
+env USER=kafka
+
+chdir {{ kafka.data_dir }}
+
+script
+  . /etc/sysconfig/kafka
+  exec su -c "{{ kafka_dir }}/bin/kafka-server-start.sh {{ kafka_dir }}/config/real-server.properties" $USER
+end script

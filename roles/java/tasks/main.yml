@@ -1,5 +1,9 @@
-- name: install wget
-  yum: name=wget state=present
+- name: install tools
+  yum: name="{{ item }}" state=present
+  with_items:
+    - "@Development tools"
+    - wget
+    - policycoreutils-python
   tags: java8
 
 - name: create /usr/java directory

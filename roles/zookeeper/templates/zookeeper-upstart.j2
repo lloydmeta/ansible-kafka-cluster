@@ -1,0 +1,16 @@
+start on filesystem or runlevel [2345]
+stop on shutdown
+
+console output
+
+respawn
+respawn limit 5 10
+
+env USER=zookeeper
+
+chdir {{ zk.data_dir }}
+
+script
+  . /etc/sysconfig/zookeeper
+  exec su -c "{{ zk_dir }}/bin/zkServer.sh start-foreground" $USER
+end script

@@ -3,10 +3,6 @@
   ignore_errors: True  #when firewalld is stopped
   tags: kafka
 
-- name: install tools
-  yum: name="@Development tools" state=present
-  tags: kafka
-
 - name: create group
   group:
     name: kafka
@@ -63,12 +59,23 @@
   notify: restart kafka
   tags: kafka
 
-- name: systemd start script
+- name: Copy sysconfig
   template:
-    src: kafka-systemd.j2
-    dest: /etc/systemd/system/kafka.service
-    owner: root
-    group: root
+    src: kafka-sysconfig.j2
+    dest: /etc/sysconfig/kafka
+    owner: kafka
+    group: kafka
     mode: 644
+  notify: restart kafka
+  tags: kafka
+
+- name: copy upstart script
+  template: >
+    src=kafka-upstart.j2
+    dest=/etc/init/kafka.conf
+    owner=root
+    group=root
+    mode=644
   notify: start kafka
   tags: kafka
+
