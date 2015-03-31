@@ -10,9 +10,7 @@ env USER=zookeeper
 
 chdir {{ zk.data_dir }}
 
-expect daemon
-
 script
   . /etc/sysconfig/zookeeper
-  exec su -c "{{ zk_dir }}/bin/zkServer.sh start" $USER
+  exec su -c "{{ zk_dir }}/bin/zkServer.sh start-foreground" $USER
 end script
