@@ -1,0 +1,3 @@
+exhibitor:
+  data_dir: /var/lib/exhibitor
+  install_dir: "/etc"

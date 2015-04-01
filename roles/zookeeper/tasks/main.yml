@@ -55,35 +55,10 @@
   command: tar xzf /tmp/{{ zk_name }}.tar.gz chdir="{{ zk.install_dir }}"
   tags: zookeeper
 
-# Config and start Zookeeper
-- name: Ensure zoo.conf is present
-  template:
-    src: zoo.cfg
-    dest: "{{ zk_dir }}/conf/zoo.cfg"
-  notify: restart zookeeper
-  tags: zookeeper
-
 - name: Ensures data dir {{ zk.data_dir }} exists
   file:
     path: "{{ zk.data_dir }}"
     state: directory
     owner: zookeeper
     group: zookeeper
-  tags: zookeeper
-
-- name: Ensure myid is set to {{ cluster_node_seq }} in {{ zk.data_dir }}/myid
-  template:
-    src: myid
-    dest: "{{ zk.data_dir }}/myid"
-  notify: restart zookeeper
-  tags: zookeeper
-
-- name: systemd start script
-  template:
-    src: zookeeper-systemd.j2
-    dest: /etc/systemd/system/zookeeper.service
-    owner: root
-    group: root
-    mode: 644
-  notify: start zookeeper
   tags: zookeeper

@@ -63,6 +63,11 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     'kafka-node-3' => { :broker_id => 3 }
   }
 
+  # There should only be 1; forwarded ports don't matter here
+  nfs_cluster_info = {
+    'shared-storage' => { :memory => 256, :client_port => 2049, :client_forward_to => 12049}
+  }
+
   ## ------- These need to be set in group vars if using Ansible w/o Vagrant ------- >
 
   # Helper to make new ips
@@ -73,6 +78,10 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   kafka_ips = IpAssigner.generate(
     IpAssigner.next_ip(zk_ips.last || private_network_begin),
     kafka_cluster_info.size)
+
+  nfs_ips = IpAssigner.generate(
+    IpAssigner.next_ip(kafka_ips.last || private_network_begin),
+    nfs_cluster_info.size)
 
   zk_cluster = Hash[zk_cluster_info.map.with_index { |(k, v), idx|
     [k, v.merge(
@@ -90,7 +99,14 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       :client_forward_to => kafka_port + idx )]
   }]
 
-  total_cluster = zk_cluster.merge(kafka_cluster)
+  nfs_cluster = Hash[kafka_cluster_info.map.with_index { |(k, v), idx|
+    [k, v.merge(
+      :ip => nfs_ips[idx]
+      )
+    ]
+  }]
+
+  total_cluster = zk_cluster.merge(kafka_cluster).merge(nfs_cluster)
 
   total_cluster.each_with_index do |(short_name, info), idx|
 
@@ -108,7 +124,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
            ansible.playbook = "site.yml"
            ansible.groups = {
              "zk" => zk_cluster.keys,
-             "kafka" => kafka_cluster.keys
+             "kafka" => kafka_cluster.keys,
+             "nfs" => nfs_cluster.keys
            }
            ansible.verbose = 'vv'
            ansible.sudo = true

@@ -1,0 +1,28 @@
+- name: disable firewalld
+  service: name=firewalld state=stopped enabled=no
+  ignore_errors: True  #when firewalld is stopped
+  tags: nfs_client
+
+- name: install nfs utils
+  action: yum pkg=nfs-utils state=present
+  tags: nfs_client
+
+- name: ensure {{ nfs_mount }} mount-to directory exists
+  file:
+    path: "{{ nfs_mount }}"
+    state: directory
+    mode: 777
+  tags: nfs_client
+
+- name: Ensure rpcbind is running
+  action: service name=rpcbind state=started enabled=yes
+  tags: nfs_client
+
+- name: mount the directory
+  mount: >
+   name={{ nfs_mount }}
+   src={{ nfs_server }}:{{ nfs_path }}
+   fstype=nfs
+   opts=rw,sync,bg
+   state=mounted
+  tags: nfs_client

@@ -1,9 +1,19 @@
-- hosts: all
+- hosts: nfs_server
+  roles:
+    - role: nfs_server
+      export_directory: /var/nfs/shared
+
+- hosts: zk:kafka
   roles:
     - { role: java, when: accept_oracle_licence }
 
 - hosts: zk
   roles:
+    - role: nfs_client
+      nfs_mount: /opt/nfs/mount
+      nfs_server: shared_storage
+      nfs_path: /var/nfs/shared
+    - exhibitor
     - zookeeper
 
 - hosts: kafka

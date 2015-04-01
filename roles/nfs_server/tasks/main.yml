@@ -1,0 +1,45 @@
+- name: disable firewalld
+  service: name=firewalld state=stopped enabled=no
+  ignore_errors: True  #when firewalld is stopped
+  tags: nfs_server
+
+- name: install nfs utils
+  action: yum pkg=nfs-utils state=present
+  tags: nfs_server
+
+- name: ensure nfs service is running (CentOS)
+  action: service name={{item}} state=started
+  with_items:
+    - rpcbind
+    - nfslock
+    - nfs
+  tags: nfs_server
+
+- name: Set shared directory
+  set_fact:
+    export_directory: /var/nfs/shared
+  tags: nfs_server
+
+- name: ensure the NFS shared directory {{ export_directory }} exists
+  file:
+    path: "{{ export_directory }}"
+    state: directory
+    owner: nobody
+    group: nobody
+    mode: 777
+  tags: nfs_server
+
+- name: Set nfs exports
+  set_fact:
+    nfs_exports:
+      - "{{ export_directory }}  *(rw,sync)"
+  tags: nfs_server
+
+- name: Copy exports file.
+  template:
+    src: exports.j2
+    dest: /etc/exports
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart nfs

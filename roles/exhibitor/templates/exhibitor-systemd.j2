@@ -1,0 +1,14 @@
+[Unit]
+Description=Exhibitor
+Before=
+After=network.target
+
+[Service]
+User=zookeeper
+Environment=JAVA_HOME=/usr/local/java8
+CHDIR= {{ exhibitor.data_dir }}
+ExecStart=java -jar exhibitor-standalone.jar -c file --fsconfigdir {{ exhibitor_shared_conf_dir }}
+Restart=on-abort
+
+[Install]
+WantedBy=multi-user.target
