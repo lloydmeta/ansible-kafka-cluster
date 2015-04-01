@@ -13,7 +13,6 @@
     backup=yes
     backrefs=yes
   tags: zookeeper
-  notify: restart zookeeper
 
 - name: create group
   group:
@@ -51,8 +50,18 @@
   tags: zookeeper
   when: zookeeper_tar_downloaded.rc == 1
 
+- name: Ensure install directory present
+  file:
+    path: "{{ zk.install_dir }}"
+    state: directory
+    owner: zookeeper
+    group: zookeeper
+  tags: zookeeper
+
 - name: Ensure tar is extracted
   command: tar xzf /tmp/{{ zk_name }}.tar.gz chdir="{{ zk.install_dir }}"
+  sudo: yes
+  sudo_user: zookeeper
   tags: zookeeper
 
 - name: Ensures data dir {{ zk.data_dir }} exists

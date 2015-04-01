@@ -1,7 +1,8 @@
-- hosts: nfs_server
+- hosts: nfs-server
   roles:
     - role: nfs_server
-      export_directory: /var/nfs/shared
+      export_directory: /var/nfs_shared
+      share_to: "{{ groups['zk'] }}"
 
 - hosts: zk:kafka
   roles:
@@ -10,10 +11,11 @@
 - hosts: zk
   roles:
     - role: nfs_client
-      nfs_mount: /opt/nfs/mount
-      nfs_server: shared_storage
-      nfs_path: /var/nfs/shared
-    - exhibitor
+      nfs_mount: /opt/nfs_mount
+      nfs_server: shared-storage
+      nfs_path: /var/nfs_shared
+    - role: exhibitor
+      exhibitor_shared_conf_dir: /opt/nfs_mount
     - zookeeper
 
 - hosts: kafka

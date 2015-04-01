@@ -69,6 +69,6 @@
     dest: /etc/systemd/system/kafka.service
     owner: root
     group: root
-    mode: 644
+    mode: 0644
   notify: start kafka
   tags: kafka

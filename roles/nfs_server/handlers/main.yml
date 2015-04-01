@@ -1,5 +1,5 @@
 - name: restart nfs
-  service: name=nfs state=restarted enabled=yes
+  service: name=nfs-server state=restarted enabled=yes
 
 - name: start nfs
-  service: name=nfs state=started enabled=yes
+  service: name=nfs-server state=started enabled=yes

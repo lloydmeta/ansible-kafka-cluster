@@ -2,7 +2,7 @@ zk:
   version: 3.4.6
   mirror: http://ftp.meisei-u.ac.jp/mirror/apache/dist
   data_dir: /var/lib/zookeeper
-  install_dir: "/etc"
+  install_dir: /etc/zookeeper
   tick_time: 2000
 zk_cluster_info: "{{ vagrant_zk_cluster_info }}"
 # If not using Vagrant,

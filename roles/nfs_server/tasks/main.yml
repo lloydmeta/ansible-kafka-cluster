@@ -4,15 +4,17 @@
   tags: nfs_server
 
 - name: install nfs utils
-  action: yum pkg=nfs-utils state=present
+  action: yum pkg={{ item }} state=present
+  with_items:
+    - "nfs-utils"
+    - "nfs-utils-lib"
   tags: nfs_server
 
-- name: ensure nfs service is running (CentOS)
-  action: service name={{item}} state=started
+- name: ensure nfs services are running
+  action: service name={{ item }} state=started enabled=yes
   with_items:
-    - rpcbind
-    - nfslock
-    - nfs
+    - "rpcbind"
+    - "nfs-server"
   tags: nfs_server
 
 - name: Set shared directory
@@ -26,13 +28,7 @@
     state: directory
     owner: nobody
     group: nobody
-    mode: 777
-  tags: nfs_server
-
-- name: Set nfs exports
-  set_fact:
-    nfs_exports:
-      - "{{ export_directory }}  *(rw,sync)"
+    mode: 0777
   tags: nfs_server
 
 - name: Copy exports file.

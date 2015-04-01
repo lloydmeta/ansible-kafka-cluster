@@ -10,11 +10,42 @@
     group: zookeeper
   tags: exhibitor
 
+- name: set fact
+  set_fact:
+    exhibitor_dir: "{{ exhibitor.install_dir}}/exhibitor"
+  tags: exhibitor
+
+- name: ensure working dir exists
+  file:
+    path: "{{ exhibitor.data_dir }}"
+    state: directory
+    owner: zookeeper
+    group: zookeeper
+  tags: exhibitor
+
+- name: ensure install dir exists
+  file:
+    path: "{{ exhibitor_dir }}"
+    state: directory
+    owner: zookeeper
+    group: zookeeper
+  tags: exhibitor
+
 - name: copy exhibitor jar
   copy: >
     src=exhibitor-standalone-1.5.5.jar
-    dest=/etc/exhibitor/exhibitor-standalone.jar
+    dest="{{ exhibitor_dir }}/exhibitor-standalone.jar"
     owner=zookeeper group=zookeeper mode=0644
+  notify: restart exhibitor
+  tags: exhibitor
+
+- name: Copy sysconfig
+  template:
+    src: exhibitor-sysconfig.j2
+    dest: /etc/sysconfig/exhibitor
+    owner: zookeeper
+    group: zookeeper
+    mode: 0644
   notify: restart exhibitor
   tags: exhibitor
 
@@ -24,6 +55,6 @@
     dest: /etc/systemd/system/exhibitor.service
     owner: root
     group: root
-    mode: 644
+    mode: 0644
   notify: start exhibitor
   tags: exhibitor

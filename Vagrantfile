@@ -99,7 +99,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       :client_forward_to => kafka_port + idx )]
   }]
 
-  nfs_cluster = Hash[kafka_cluster_info.map.with_index { |(k, v), idx|
+  nfs_cluster = Hash[nfs_cluster_info.map.with_index { |(k, v), idx|
     [k, v.merge(
       :ip => nfs_ips[idx]
       )
@@ -112,6 +112,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
     config.vm.define short_name do |host|
       host.vm.network :forwarded_port, guest: info[:client_port], host: info[:client_forward_to]
+      if short_name == zk_cluster.keys.first
+        host.vm.network :forwarded_port, guest: 8080, host: 8080
+      end
       host.vm.network :private_network, ip: info[:ip]
       host.vm.hostname = short_name
       host.vm.provider :virtualbox do |vb|
@@ -125,7 +128,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
            ansible.groups = {
              "zk" => zk_cluster.keys,
              "kafka" => kafka_cluster.keys,
-             "nfs" => nfs_cluster.keys
+             "nfs-server" => nfs_cluster.keys
            }
            ansible.verbose = 'vv'
            ansible.sudo = true
