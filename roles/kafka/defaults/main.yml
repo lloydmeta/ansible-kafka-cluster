@@ -1,7 +1,7 @@
 kafka:
-  version: 0.8.2.1
+  version: 0.8.2.2
   scala_version: 2.11
-  mirror: http://ftp.meisei-u.ac.jp/mirror/apache/dist
+  mirror: http://apache.mirrors.tds.net/
   data_dir: /var/lib/kafka
   install_dir: "/etc"
 # This does not have to be every Zookeeper host, but the more the better
