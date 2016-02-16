@@ -1,6 +1,6 @@
 zk:
   version: 3.4.6
-  mirror: http://ftp.meisei-u.ac.jp/mirror/apache/dist
+  mirror: http://apache.mirrors.tds.net/
   data_dir: /var/lib/zookeeper
   install_dir: "/etc"
   tick_time: 2000
