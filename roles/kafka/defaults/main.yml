@@ -4,6 +4,7 @@ kafka:
   mirror: http://apache.mirrors.tds.net/
   data_dir: /var/lib/kafka
   install_dir: "/etc"
+  
 # This does not have to be every Zookeeper host, but the more the better
 #  by default, we assume this is run at the same time as Zookeeper provisioning
 zk_hosts: "{{ groups['zk'] }}" # This does not have to be every Zookeeper host
