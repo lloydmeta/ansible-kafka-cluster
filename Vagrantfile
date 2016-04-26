@@ -116,8 +116,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
            ansible.extra_vars = {
              accept_oracle_licence: accept_oracle_licence,
              vagrant_zk_client_port: zk_port,
-             vagrant_zk_cluster_info: zk_cluster,
-             vagrant_kafka_cluster_info: kafka_cluster
+             vagrant_zk_cluster_info: zk_cluster_info,
+             vagrant_kafka_cluster_info: kafka_cluster_info
            }
          end
        end
