@@ -71,7 +71,7 @@
     group: zookeeper
   tags: zookeeper
 
-- name: Ensure myid is set to {{ cluster_node_seq }} in {{ zk.data_dir }}/myid
+- name: Ensure myid is set in {{ zk.data_dir }}/myid
   template:
     src: myid
     dest: "{{ zk.data_dir }}/myid"
